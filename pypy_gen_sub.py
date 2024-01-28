@@ -5,7 +5,8 @@ from valid import val_score
 
 
 
-p = '/kaggle/input/santa-2023/'
+# p = '/kaggle/input/santa-2023/'
+p = './'
 print('Reading data...')
 path = pd.read_csv(p + 'puzzles.csv')
 info = pd.read_csv(p + 'puzzle_info.csv')
@@ -17,7 +18,7 @@ path = pd.merge(path,info)
 ltypes = [
 'wreath_21/21',
 ]
-sub = pd.read_csv('/kaggle/input/using-rcube-solver/submission_814777.csv')
+sub = pd.read_csv('./submission_nxnxn.csv')
 nretry = 1
 
 

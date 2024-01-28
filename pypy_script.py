@@ -5,7 +5,7 @@ from valid import val_score
 
 
 
-p = '/kaggle/input/santa-2023/'
+p = './'
 print('Reading data...')
 path = pd.read_csv(p + 'puzzles.csv')
 info = pd.read_csv(p + 'puzzle_info.csv')

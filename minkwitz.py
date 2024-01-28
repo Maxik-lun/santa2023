@@ -1,6 +1,6 @@
 from tqdm import tqdm
-import pandas as pd
-import numpy as np
+# import pandas as pd
+# import numpy as np
 from itertools import chain, product, combinations
 from sympy.combinatorics.perm_groups import Permutation,PermutationGroup
 from sympy.combinatorics.perm_groups import _distribute_gens_by_base,_orbits_transversals_from_bsgs
@@ -17,10 +17,10 @@ class PermWord:
     def is_identity(self):
         return (self.words.len()==0)
 
-    def inverse(self,geninvs):
+    def inverse(self, geninvs):
         inv_perm = ~self.permutation
-        inv_word = invwords(self.words,geninvs)
-        return PermWord(inv_perm,inv_word)
+        inv_word = invwords(self.words, geninvs)
+        return PermWord(inv_perm, inv_word)
 
     def __mul__(self, other):
         result_perm = self.permutation * other.permutation
@@ -63,14 +63,14 @@ class SGSPermutationGroup:
             self.bt = G.basic_transversals
             print(len(self.base))
         else:
-            base,trans, orbits = schreier_sims_random(G)
+            base, trans, orbits = schreier_sims_random(G)
             self.base = base
             self.bo = orbits
             self.bt = trans
         
      
         self.lo = [len(x) for x in self.bo]
-        self.so = np.sum(self.lo)
+        self.so = sum(self.lo)
         self.nu = None
     
     #   n: max number of rounds
@@ -78,7 +78,7 @@ class SGSPermutationGroup:
     #   w: limit for word size
     
     def getShortWords(self,n=10000,s=2000,w=20):
-        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs,self.base, n, s, w, self.so)
+        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, n, s, w, self.so)
 
 
     def FactorPermutation(self,target):
@@ -101,8 +101,7 @@ class SGSPermutationGroup:
 def schreier_sims_random(G):
     base, strong_gens = G.schreier_sims_random(consec_succ=5)
     strong_gens_distr =_distribute_gens_by_base(base, strong_gens)
-    basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base,\
-                strong_gens_distr, slp=True)
+    basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base, strong_gens_distr, slp=True)
 
     # rewrite the indices stored in slps in terms of strong_gens
     for i, slp in enumerate(slps):
@@ -123,7 +122,7 @@ def applyPerm(sol,PG):
     return target       
 
 
-def oneStep(N, gens,geninvs,base, i, t, nu):
+def oneStep(N, gens, geninvs, base, i, t, nu):
     j = t.permutation.array_form[base[i]]  # b_i ^ t
     t1 = t.inverse(geninvs)
     if nu[i][j] is not None:
@@ -131,7 +130,7 @@ def oneStep(N, gens,geninvs,base, i, t, nu):
         result.words = simplify(result.words)
         if len(t.words) < len(nu[i][j].words):
             nu[i][j] = t1
-            oneStep(N, gens,geninvs, base, i, t1, nu)
+            oneStep(N, gens, geninvs, base, i, t1, nu)
     else:
         nu[i][j] = t1
         oneStep(N, gens, geninvs, base, i, t1, nu)
@@ -144,7 +143,7 @@ def oneRound(N, gens,geninvs, base, lim, c, nu, t):
         t = oneStep(N, gens, geninvs, base, i, t, nu)
         i += 1
 
-def oneImprove(N, gens,geninvs, base, lim, nu):
+def oneImprove(N, gens, geninvs, base, lim, nu):
     for j in range(len(base)):
         for x in nu[j]:
             for y in nu[j]:
@@ -157,7 +156,7 @@ def oneImprove(N, gens,geninvs, base, lim, nu):
                 pw = x
                 x.flag = False
 
-def fillOrbits(N, gens,geninvs, base, lim, nu):
+def fillOrbits(N, gens, geninvs, base, lim, nu):
     for i in range(len(base)):
         orbit = []  # partial orbit already found
         for y in nu[i]:
@@ -185,7 +184,7 @@ def fillOrbits(N, gens,geninvs, base, lim, nu):
 #   so: sum  orbits size
 
 #
-def buildShortWordsSGS(N, gens, geninvs,base, n, s, w, so):
+def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
     nu = [[None for _ in range(N)] for _ in range(len(base))]
     for i in range(len(base)):
         nu[i][base[i]] = PermWord(Permutation(N),[])
@@ -204,7 +203,7 @@ def buildShortWordsSGS(N, gens, geninvs,base, n, s, w, so):
             pw = PermWord(perm,list(gen))
             oneRound(N, gens, geninvs, base, lim, 0, nu, pw)
             nw0 =nw
-            nw =  np.sum([np.sum([x!=None for x in nu_i]) for nu_i in nu])
+            nw =  sum([sum([x!=None for x in nu_i]) for nu_i in nu])
             deltanw = nw-nw0
             pbar.update(deltanw)
             if cnt % s == 0:
@@ -226,7 +225,7 @@ def factorizeM(N, gens, geninvs, base, nu, target):
     if not perm == Permutation(size = N+1):
         print("failed to reach identity, permutation not in group")
 
-    return simplify(invwords(result_list,geninvs))
+    return simplify(invwords(result_list, geninvs))
 
 def gen_perm_from_word(gens,words):
     res = gens[words[0]]
@@ -234,7 +233,7 @@ def gen_perm_from_word(gens,words):
         res = res * gens[w]
     return res
 
-def invwords(ws,geninvs):
+def invwords(ws, geninvs):
     inv_ws = [geninvs[g] for g in ws]
     inv_ws.reverse() 
     return inv_ws

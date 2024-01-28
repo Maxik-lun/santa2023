@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 from tqdm import tqdm
 import networkx as nx
 from minkwitz import applyPerm
@@ -14,7 +14,7 @@ def ReduceFactor(PG,s,maxl = 15):
         # Find shortcuts using fast factorization of permutations
         ls = len(s)
         for i in tqdm(range(ls)):
-            for j in np.arange(3,maxl):
+            for j in range(3, maxl):
                 j1= i+j
                 if j1 < ls:
                     subs = s[i:j1+1]
