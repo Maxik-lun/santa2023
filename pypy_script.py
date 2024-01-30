@@ -15,8 +15,10 @@ path = pd.merge(path,info)
 
 
 ltypes = [
-'cube_4/4/4',
-]
+    'cube_33/33/33',
+    # 'globe_3/33', 
+    # 'globe_8/25',
+    ]
 sub = pd.read_csv(p + 'sample_submission.csv')
 nretry = 1
 
