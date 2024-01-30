@@ -33,7 +33,7 @@ class PermWord:
 # is used for mantainig a short word representation 
 
 class SGSPermutationGroup:
-    def __init__(self, gensi=[],deterministic = False):
+    def __init__(self, gensi=[], base = None, strong_gens = None, deterministic = False):
         N =max([max(gensi[g]) for g in gensi])+1
         gensi = {g:Permutation(gensi[g],size = N) for g in gensi}
         gens = gensi.copy()
@@ -56,12 +56,16 @@ class SGSPermutationGroup:
         G = PermutationGroup(gen0)
         self.G = G
         # obtain the strong generating set
-        if deterministic:
+        if base is not None and strong_gens is not None:
+            basic_orbits, transversals, _ = sgs_process(base, strong_gens)
+            self.base = base
+            self.bo = basic_orbits
+            self.bt = transversals
+        elif deterministic:
             G.schreier_sims()
             self.base = G.base
             self.bo = G.basic_orbits
             self.bt = G.basic_transversals
-            print(len(self.base))
         else:
             base, trans, orbits = schreier_sims_random(G)
             self.base = base
@@ -92,23 +96,26 @@ class SGSPermutationGroup:
         qual = quality(self.N, self.nu, self.base)
         return test,qual
 
-    def swapBase(self,i):
-        S = self.G
-        base, gens = S.baseswap(S.base, S.strong_gens, i, randomized=False)
-        self.base = base
-  
-        
-def schreier_sims_random(G):
-    base, strong_gens = G.schreier_sims_random(consec_succ=5)
-    strong_gens_distr =_distribute_gens_by_base(base, strong_gens)
-    basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base, strong_gens_distr, slp=True)
-
+def sgs_process(base, strong_gens):
+    strong_gens_distr = _distribute_gens_by_base(base, strong_gens)
+    basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base,strong_gens_distr, slp=True)
     # rewrite the indices stored in slps in terms of strong_gens
     for i, slp in enumerate(slps):
         gens = strong_gens_distr[i]
         for k in slp:
             slp[k] = [strong_gens.index(gens[s]) for s in slp[k]]
-
+    basic_orbits = [sorted(x) for x in basic_orbits]
+    return basic_orbits, transversals, slps 
+        
+def schreier_sims_random(G):
+    base, strong_gens = G.schreier_sims_random(consec_succ=5)
+    strong_gens_distr =_distribute_gens_by_base(base, strong_gens)
+    basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base, strong_gens_distr, slp=True)
+    # rewrite the indices stored in slps in terms of strong_gens
+    for i, slp in enumerate(slps):
+        gens = strong_gens_distr[i]
+        for k in slp:
+            slp[k] = [strong_gens.index(gens[s]) for s in slp[k]]
     transversals = transversals
     basic_orbits = [sorted(x) for x in basic_orbits]
     return base, transversals,basic_orbits
@@ -221,10 +228,8 @@ def factorizeM(N, gens, geninvs, base, nu, target):
         omega = perm.array_form[base[i]]
         perm *= nu[i][omega].permutation
         result_list = result_list + nu[i][omega].words
-
     if not perm == Permutation(size = N+1):
         print("failed to reach identity, permutation not in group")
-
     return simplify(invwords(result_list, geninvs))
 
 def gen_perm_from_word(gens,words):
@@ -239,19 +244,19 @@ def invwords(ws, geninvs):
     return inv_ws
 
 
-#remove invers generators in concatenation
-def simplify(ff):
-    if not ff:
-        return ff
-    # find adjacent inverse generators
-    zero_sum_indices = [(i, i + 1) for i in range(len(ff) - 1) if ff[i] == geninvs[ff[i + 1]] ]
-    # If there is no more simplications
-    if not zero_sum_indices:
-        return ff
-    # remove inverse pairs
-    for start, end in zero_sum_indices:
-        return simplify(ff[:start] + ff[end + 1:])
-    return ff
+# #remove invers generators in concatenation
+# def simplify(ff):
+#     if not ff:
+#         return ff
+#     # find adjacent inverse generators
+#     zero_sum_indices = [(i, i + 1) for i in range(len(ff) - 1) if ff[i] == geninvs[ff[i + 1]] ]
+#     # If there is no more simplications
+#     if not zero_sum_indices:
+#         return ff
+#     # remove inverse pairs
+#     for start, end in zero_sum_indices:
+#         return simplify(ff[:start] + ff[end + 1:])
+#     return ff
 
 def simplify(ff):
     return(ff)
