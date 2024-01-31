@@ -1,4 +1,5 @@
 from tqdm import tqdm
+import random
 # import pandas as pd
 # import numpy as np
 from itertools import chain, product, combinations
@@ -81,7 +82,7 @@ class SGSPermutationGroup:
     #   s: reset each s rounds
     #   w: limit for word size
     
-    def getShortWords(self,n=10000,s=2000,w=20):
+    def getShortWords(self,n=1000000,s=2000,w=20):
         self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, n, s, w, self.so)
 
 
@@ -199,13 +200,14 @@ def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
     maximum = n
     lim = float(w)
     cnt = 0
-    with tqdm(total= so) as pbar:   
-        iter_gen = chain.from_iterable(product(list(gens), repeat=i) for i in range(1,12))
+    rand_gens = random.sample(list(gens), len(gens))
+    # rand_gens = list(gens)
+    with tqdm(total= so) as pbar:
+        iter_gen = chain.from_iterable(product(rand_gens, repeat=i) for i in range(1,12))
         for gen in iter_gen:
             cnt += 1
             if cnt >= maximum or nw == so :
                 break
-
             perm = gen_perm_from_word(gens,gen)
             pw = PermWord(perm,list(gen))
             oneRound(N, gens, geninvs, base, lim, 0, nu, pw)
@@ -218,7 +220,6 @@ def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
                 if nw < so:
                     fillOrbits(N, gens, geninvs, base, lim, nu)
                 lim *= 5 / 4
-                
     return nu
 
 def factorizeM(N, gens, geninvs, base, nu, target):
@@ -271,7 +272,6 @@ def test_SGS(N,nu,base):
         if p != []:
             result = False
             print('fail identity')
-            
         for j in range(N):
             if j in nu[i]:
                 p =nu[i][j].permutation.array_form 
@@ -280,9 +280,7 @@ def test_SGS(N,nu,base):
                     p2 = p[base[k]]
                     if p2 != base[k]:
                         result = False
-                        print('fail stabilizer',i,j,k)
-
-                
+                        print('fail stabilizer',i,j,k)                
                 # correct transversal at i
                 if p[j] != base[i]:
                     result = False  
