@@ -82,7 +82,7 @@ class SGSPermutationGroup:
     #   w: limit for word size
     
     def getShortWords(self,n=1000000,s=2000,w=20):
-        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, n, s, w, self.log_size)
+        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, self.bo, n, s, w, self.log_size)
 
     def FactorPermutation(self,target):
         if self.nu == None:
@@ -182,8 +182,16 @@ def fillOrbits(N, gens, geninvs, base, lim, nu):
 #   s: reset each s rounds
 #   w: limit for word size
 #   so: sum  orbits size
+def isTableFull(nu, bo):
+    nw = 0
+    for i in range(len(bo)):
+        img_size = 0
+        for j in bo[i]:
+            img_size += (nu[i][j] != None)
+        nw += np.log(img_size)
+    return nw
 
-def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, log_size):
+def buildShortWordsSGS(N, gens, geninvs, base, bo, n, s, w, log_size):
     nu = [[None for _ in range(N)] for _ in range(len(base))]
     for i in range(len(base)):
         nu[i][base[i]] = PermWord(Permutation(N),[])
@@ -205,7 +213,7 @@ def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, log_size):
             pw = PermWord(perm,list(gen))
             oneRound(N, gens, geninvs, base, lim, 0, nu, pw)
             nw0 =nw
-            nw =  sum([np.log(sum([x!=None for x in nu_i])) for nu_i in nu])
+            nw =  isTableFull(nu, bo)
             deltanw = nw-nw0
             pbar.update(deltanw)
             if cnt % s == 0:

@@ -1,6 +1,6 @@
 import pandas as pd
-from minkwitz import SGSPermutationGroup,applyPerm
-from process_utils import parse_gap_data
+from minkwitz import SGSPermutationGroup, applyPerm
+from process_utils import parse_gap_data, load_sympy
 from reduce import ReduceFactor
 from valid import val_score
 
@@ -11,6 +11,7 @@ path = pd.read_csv(p + 'puzzles.csv')
 info = pd.read_csv(p + 'puzzle_info.csv')
 path = pd.merge(path,info)
 gap_dir = "./gap_data/"
+sp_dir = './sympy_data/'
 # exception: 'wreath_6/6', 'cube_33/33/33'
 ltypes = [
     # 'cube_4/4/4', 'cube_2/2/2', 'cube_3/3/3', 
@@ -29,7 +30,8 @@ for type in ltypes:
     ids = sub[path.puzzle_type == type].id.values
     gens = eval(info[info.puzzle_type == type].allowed_moves.values[0])
     N = max([max(gens[g]) for g in gens])+1
-    base, strong_gens = parse_gap_data(gap_dir, type, N, debug=False)
+    # base, strong_gens = parse_gap_data(gap_dir, type, N, debug=False)
+    base, strong_gens, _ = load_sympy(sp_dir, type, N)
     for _ in range(nretry):
         sols = sub[path.puzzle_type == type].moves.values
         istate = path[path.puzzle_type == type].initial_state.values
@@ -45,15 +47,12 @@ for type in ltypes:
         geninvs = PG.geninvs
         s = int(len(base)**(1.8))
         n = min(s*100, 5000_000)
-        PG.getShortWords(n=n, s=s, w=300)
+        PG.getShortWords(n=n, s=s, w=10)
         print(PG.CheckQuality())
         for i,sol in enumerate(sols):
             sol = sol.split('.')
-            # print(istate[i])
-            # print(fstate[i])
             sol.reverse()
             target = applyPerm(sol,PG)
-            # print(target)
             ss = PG.FactorPermutation(target)
             if len(ss) > len(sol):
                 ss = sol
