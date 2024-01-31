@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import random
 # import pandas as pd
-# import numpy as np
+import numpy as np
 from itertools import chain, product, combinations
 from sympy.combinatorics.perm_groups import Permutation,PermutationGroup
 from sympy.combinatorics.perm_groups import _distribute_gens_by_base,_orbits_transversals_from_bsgs
@@ -72,10 +72,9 @@ class SGSPermutationGroup:
             self.base = base
             self.bo = orbits
             self.bt = trans
-        
-     
         self.lo = [len(x) for x in self.bo]
-        self.so = sum(self.lo)
+        self.so = sum(self.lo) #useless
+        self.log_size = np.sum(np.log(self.lo))
         self.nu = None
     
     #   n: max number of rounds
@@ -83,8 +82,7 @@ class SGSPermutationGroup:
     #   w: limit for word size
     
     def getShortWords(self,n=1000000,s=2000,w=20):
-        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, n, s, w, self.so)
-
+        self.nu = buildShortWordsSGS(self.N, self.gens, self.geninvs, self.base, n, s, w, self.log_size)
 
     def FactorPermutation(self,target):
         if self.nu == None:
@@ -123,7 +121,6 @@ def applyPerm(sol,PG):
     for m in sol[1:]:
         target = target*PG.gens[m]
     return target       
-
 
 def oneStep(N, gens, geninvs, base, i, t, nu):
     j = t.permutation.array_form[base[i]]  # b_i ^ t
@@ -186,8 +183,7 @@ def fillOrbits(N, gens, geninvs, base, lim, nu):
 #   w: limit for word size
 #   so: sum  orbits size
 
-#
-def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
+def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, log_size):
     nu = [[None for _ in range(N)] for _ in range(len(base))]
     for i in range(len(base)):
         nu[i][base[i]] = PermWord(Permutation(N),[])
@@ -198,23 +194,23 @@ def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
     rand_gens = random.sample(list(gens), len(gens))
     # rand_gens = [random.sample(list(gens), len(gens)) for _ in range(13)]
     # rand_gens = list(gens)
-    with tqdm(total= so) as pbar:
+    with tqdm(total= log_size) as pbar:
         iter_gen = chain.from_iterable(product(rand_gens, repeat=i) for i in range(1,12))
         # iter_gen = chain.from_iterable(product(*rand_gens[:i]) for i in range(1,12))
         for gen in iter_gen:
             cnt += 1
-            if cnt >= maximum or nw == so :
+            if cnt >= maximum or nw >= log_size:
                 break
             perm = gen_perm_from_word(gens,gen)
             pw = PermWord(perm,list(gen))
             oneRound(N, gens, geninvs, base, lim, 0, nu, pw)
             nw0 =nw
-            nw =  sum([sum([x!=None for x in nu_i]) for nu_i in nu])
+            nw =  sum([np.log(sum([x!=None for x in nu_i])) for nu_i in nu])
             deltanw = nw-nw0
             pbar.update(deltanw)
             if cnt % s == 0:
                 oneImprove(N, gens, geninvs, base, lim, nu)
-                if nw < so:
+                if nw < log_size:
                     fillOrbits(N, gens, geninvs, base, lim, nu)
                 lim *= 5 / 4
     return nu
