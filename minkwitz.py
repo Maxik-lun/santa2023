@@ -100,13 +100,8 @@ class SGSPermutationGroup:
 def sgs_process(base, strong_gens):
     strong_gens_distr = _distribute_gens_by_base(base, strong_gens)
     basic_orbits, transversals, slps = _orbits_transversals_from_bsgs(base,strong_gens_distr, slp=True)
-    # rewrite the indices stored in slps in terms of strong_gens
-    for i, slp in enumerate(slps):
-        gens = strong_gens_distr[i]
-        for k in slp:
-            slp[k] = [strong_gens.index(gens[s]) for s in slp[k]]
     basic_orbits = [sorted(x) for x in basic_orbits]
-    return basic_orbits, transversals, slps 
+    return basic_orbits, transversals, slps
         
 def schreier_sims_random(G):
     base, strong_gens = G.schreier_sims_random(consec_succ=5)
@@ -201,9 +196,11 @@ def buildShortWordsSGS(N, gens, geninvs, base, n, s, w, so):
     lim = float(w)
     cnt = 0
     rand_gens = random.sample(list(gens), len(gens))
+    # rand_gens = [random.sample(list(gens), len(gens)) for _ in range(13)]
     # rand_gens = list(gens)
     with tqdm(total= so) as pbar:
         iter_gen = chain.from_iterable(product(rand_gens, repeat=i) for i in range(1,12))
+        # iter_gen = chain.from_iterable(product(*rand_gens[:i]) for i in range(1,12))
         for gen in iter_gen:
             cnt += 1
             if cnt >= maximum or nw == so :
@@ -243,21 +240,6 @@ def invwords(ws, geninvs):
     inv_ws = [geninvs[g] for g in ws]
     inv_ws.reverse() 
     return inv_ws
-
-
-# #remove invers generators in concatenation
-# def simplify(ff):
-#     if not ff:
-#         return ff
-#     # find adjacent inverse generators
-#     zero_sum_indices = [(i, i + 1) for i in range(len(ff) - 1) if ff[i] == geninvs[ff[i + 1]] ]
-#     # If there is no more simplications
-#     if not zero_sum_indices:
-#         return ff
-#     # remove inverse pairs
-#     for start, end in zero_sum_indices:
-#         return simplify(ff[:start] + ff[end + 1:])
-#     return ff
 
 def simplify(ff):
     return(ff)
